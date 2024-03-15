@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap');
+
+body {
+    background-color: #191919;
+    overflow-x: hidden;
+    font-family: 'Ubuntu', sans-serif;
+    font-weight: 400;
+    overflow-y: hidden;
+    margin: 0;
+}
+
+.flex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#canvas {
+    filter: blur(7px);
+}
+
+.tutorial-container {
+    align-items: end;
+    height: 99vh;
+}
+
+.tutorial-container > div {
+    position: absolute;
+    top: 50px;
+    right: 100px;
+    display: flex;
+    flex-direction: column;
+    font-size: 20px;
+    color: #ddd;
+}
+
+.tutorial-container > div > button {
+    background: green;
+    width: 70px;
+    height: 30px;
+    border: 0;
+    border-radius: 4px;
+    font-family: 'Ubuntu', sans-serif;
+    color: #ddd;
+    display: none;
+    font-size: 15px;
+}
+
+.tutorial-container > div > button:active {
+    filter: brightness(80%);
+}
+
+.tutorial-container > div > div.curTime {
+    display: none;
+    justify-content: center;
+}
+
+.tutorial-container > img {
+    transition: opacity 1s;
+    width: 150px;
+    transform: translateX(200px);
+    filter: blur(1px);
+}
+
+ul.title-animation {
+    margin: auto;
+    padding: 0px;
+    width: fit-content;
+    height: 85vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+ul.title-animation li {
+    list-style:none;
+    position:relative;
+    width: fit-content;
+}
+
+ul.title-animation li a {
+    display: block;
+    position: relative;
+    text-decoration:none;
+    font-size: 5em;
+    line-height:1.6em;
+    letter-spacing:2px;
+    color: transparent !important;
+    -webkit-text-stroke:5px var(--clr);
+    font-family: 'Ubuntu', sans-serif;
+    white-space: nowrap;
+}
+
+ul.title-animation li a::before {
+    content:attr(data-text);
+    position:absolute;
+    width: 100%;
+    color: var(--clr);
+    overflow:hidden;
+    transition: width 1s;
+    border-right:8px solid var(--clr);
+}
+
+ul.title-animation li a:hover::before {
+    width: 0;
+}
+
+.content {
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    user-select: none;
+}
+
+.content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background: #777;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.content > div {
+    scroll-snap-align: start;
+    height: 100vh;
+    position: relative;
+}
+
+.pos-abs {
+    position: absolute;
+    width: 100%;
+    top: 0;
+}
+
+.content .bio {
+    width: 600px;
+    color: #ddd;
+}
+
+.content .bio > p {
+    margin: 30px 0;
+    font-size: 20px;
+    text-align: justify;
+}
+
+.content .bio button {
+    background: rgba(37, 142, 150, 0.836);
+    width: 50%;
+    height: 50px;
+    border-radius: 5px;
+    border: 0;
+    display: block;
+    margin: auto;
+    color: #cacaca;
+    font-size: 20px;
+    font-family: 'Ubuntu', sans-serif;
+    transition: .2s;
+}
+
+.content .bio button:hover {
+    filter: brightness(85%);
+}
+
+.content .bio button:active {
+    filter: brightness(70%);
+}

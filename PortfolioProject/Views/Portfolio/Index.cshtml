@@ -1,0 +1,223 @@
+﻿@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Home</title>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="~/css/styles.css">
+</head>
+<body onload="loaded">
+	<div class="content">
+		<div class="flex">
+			<div class="canvas-container">
+				<canvas id="canvas"></canvas>
+			</div>
+			<div class="tutorial-container pos-abs flex">
+				<div>
+					<div class="curTime">
+						<span class="sec"></span>.<span class="ms"></span>
+					</div>
+					<button onclick="resetGame()">Retry</button>
+				</div>
+				<img src="~/imgs/wasd.png" alt="tutorial">
+			</div>
+			<ul class="title-animation pos-abs">
+				<li style="--clr:#ddd">
+					<h2>
+						<a href="#bio" data-text="&nbsp;Barta Balazs">&nbsp;Barta Balazs&nbsp;</a>
+					</h2>
+				</li>
+			</ul>
+		</div>
+		<div class="flex">
+			<div class="bio" id="bio">
+				<h1>Hi, my name is Barta Balazs.</h1>
+				<p>As a novice programmer, I'm eager to dive into the world of coding. While I may lack work experience, my passion for learning and problem-solving drives me forward. With each line of code I write, I'm excited to explore the endless possibilities and challenges programming has to offer.</p>
+				<div class="flex gap-5">
+					<button onclick="location.href = '/portfolio/roadmap'">More about me</button>
+					<button onclick="location.href = '/portfolio/projects'">My projects</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+<script>
+	var wHeight = window.innerHeight - 30
+  	var canvasWidth = wHeight*1.5
+	document.querySelector('#canvas').height = wHeight
+	document.querySelector('#canvas').width = canvasWidth
+	
+	const c = document.getElementById("canvas").getContext("2d");
+	const oneBlockSize = wHeight/16
+	const tutorial = document.querySelector('.tutorial-container > img')
+	const curTime = document.querySelector('.tutorial-container .curTime')
+	const resetBtn = document.querySelector('.tutorial-container > div > button')
+	
+	var finished = false
+	var isStarted = false
+	var startTime
+
+	let keysDown = {}
+	
+	let currentLevel
+	
+	
+	const player = {
+		x: wHeight*1.5/2,
+		y: wHeight-oneBlockSize,
+		width: oneBlockSize,
+		height: oneBlockSize,
+		gpe: 0,
+		yke: 0,
+		mass: oneBlockSize,
+		speed: 5
+	}
+	
+	const level =
+   `000000000000000000000000
+000000000000000000000000
+000000000000000000000222
+000000000000000000000000
+000000000001100110000000
+001100000000000000000000
+000000000000000000000000
+000000000000000000000000
+000000000000000000000000
+000000011111111111100111
+000000000000000000000000
+000000000000000000000000
+000000001111111111111111
+000000000000000000000000
+111100000000000000000000
+000000000000000000000000`;
+	
+	function main() {
+	  input()
+	  gravity(player)
+	  draw()
+	  if(!finished)
+	  setTimeout(function() {
+			main()
+	  }, 10)
+	}
+	
+	function gravity(obj) {
+	  obj.y -= obj.yke;
+	  obj.yke -= obj.gpe;
+	  obj.gpe = calcGPE(obj);
+	  if (getTile(obj.x, obj.y) !== "0" || getTile(obj.x + oneBlockSize, obj.y) !== "0") {
+		if (obj.yke >= 0){
+		obj.yke = -0.5;
+		obj.y += 1;
+		}
+	  } else {
+		if(getTile(obj.x + oneBlockSize, (obj.y + oneBlockSize)) === "2" || getTile(obj.x, (obj.y + oneBlockSize)) === "2") {
+			finished = true
+			resetBtn.style.display = 'block'
+		}
+		if (getTile(obj.x + oneBlockSize, (obj.y + oneBlockSize)) !== "0" || getTile(obj.x, (obj.y + oneBlockSize)) !== "0") {
+		  if (obj.yke <= 0){
+			obj.yke = 0;
+			obj.y -= (obj.y % oneBlockSize);
+		  }
+		}
+	  }
+	}
+	
+	function draw() {
+	  var timer = new Date().getTime() - startTime
+	  curTime.querySelector('.sec').innerHTML = Math.floor(timer / 1000)
+	  curTime.querySelector('.ms').innerHTML = timer % 1000
+	  c.clearRect(0, 0, canvas.width, canvas.height);
+	  c.fillStyle = "crimson";
+	  c.fillRect(player.x, player.y, player.width, player.height);
+	  c.fillStyle = "#777777";
+	  for (let row = 0; row < currentLevel.length; row++) {
+		for (let col = 0; col < currentLevel[0].length; col++) {
+		  if (currentLevel[row][col] === "1" || currentLevel[row][col] === "2") {
+			if(currentLevel[row][col] === "2") c.fillStyle = 'green'
+			c.fillRect(col * oneBlockSize, row * oneBlockSize, oneBlockSize, oneBlockSize);
+			c.fillStyle = '#777'
+		  }
+		}
+	  }
+	}
+	
+	function parseLevel(lvl) {
+	  const toRows = lvl.split("\n");
+	  const toColumns = toRows.map(r => r.split(""));
+	  return toColumns;
+	}
+
+	function input() {
+	  if (65 in keysDown) {
+		if (getTile((player.x - player.speed) + 1, player.y + 16) !== "1" && player.x > 1) {
+		  player.x -= player.speed;
+		}
+	  }
+	
+	  if (68 in keysDown) {
+		if (getTile(((player.x + player.width) + player.speed) - 1, player.y + 16) !== "1" && player.x + player.width + player.speed< canvas.width) {
+		  player.x += player.speed;
+		}
+	  }
+	
+	  if (87 in keysDown && player.yke === 0) {
+		if (getTile(player.x, player.y - 1) !== "1" && getTile(player.x + oneBlockSize, player.y - 1) !== "1"){
+			player.yke += 10;
+		}
+	  }
+	}
+	
+	function getTile(x, y) {
+	  if (x < currentLevel[0].length * oneBlockSize && x > 0 && y < currentLevel.length * oneBlockSize && y > 0) {
+		return currentLevel[Math.floor(y / oneBlockSize)][Math.floor(x / oneBlockSize)]
+	  }
+	}
+	
+	function calcGPE(obj) {
+	  return obj.mass * (9.8 / 1000000) * ((512 - obj.height) - (obj.y / oneBlockSize))
+	}
+	
+	addEventListener("keydown", function (event) {
+		if(event.keyCode == 65 || event.keyCode == 68 || event.keyCode == 87)
+			if(!isStarted) start()
+	  	keysDown[event.keyCode] = true;
+	})
+	
+	addEventListener("keyup", function (event) {
+	  delete keysDown[event.keyCode];
+	})
+
+	function start() {
+		startTime = new Date().getTime()
+		curTime.style.display = 'flex'
+		tutorial.style.opacity = '0'
+		setTimeout(() => {
+			tutorial.style.display = 'none'
+		}, 1000);
+		isStarted = true
+	}
+
+	function resetGame() {
+		curTime.style.display = 'none'
+		finished = false
+		isStarted = false
+		resetBtn.style.display = 'none'
+		player.x = wHeight*1.5/2
+		player.y = wHeight-oneBlockSize
+		main()
+	}
+	
+	window.onload = function () {
+	  currentLevel = parseLevel(level)
+	  main()
+	}
+</script>
+</html>
