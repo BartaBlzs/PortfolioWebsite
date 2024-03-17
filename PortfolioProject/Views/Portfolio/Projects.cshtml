@@ -11,11 +11,18 @@
     <link rel="stylesheet" href="~/css/projects.css">
 </head>
 <body>
-    <div>
-        <div>proj 1</div>
-        <div>proj 1</div>
-        <div>proj 1</div>
-        <div>proj 1</div>
+    <div class="flex h-100">
+        <div class="flex project-container">
+            <div>Memory Game</div>
+            <div>FTP file manager</div>
+            <div>Portfolio</div>
+        </div>
     </div>
 </body>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+    $('.flex.project-container > div').click(function () {
+        location.href = `/portfolio/projects?id=${$(this).parent().children().index($(this))}`
+    })
+</script>
 </html>

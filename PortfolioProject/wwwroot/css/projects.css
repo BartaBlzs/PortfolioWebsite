@@ -5,7 +5,8 @@ body {
     font-family: 'Ubuntu', sans-serif;
     font-weight: 400;
     margin: 0;
-    overflow: hidden;
+    color: #eee;
+    scroll-behavior: smooth;
 }
 
 .flex {
@@ -13,4 +14,130 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
+}
+
+.h-100 {
+    height: 100vh;
+}
+
+.project-container {
+    width: 60%;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: left;
+}
+
+.project-container > div {
+    width: 40%;
+    height: 75px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3c3e44;
+    border-radius: 5px;
+    transition: 250ms;
+    font-size: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.project-container > div:hover {
+    filter: brightness(80%);
+}
+
+.f-col {
+    flex-direction: column;
+}
+
+.f-col p {
+    font-size: 22px;
+    width: 70%;
+    text-align: justify;
+    margin: 15px 0;
+}
+
+.f-col .margin-b {
+    margin: 50px 0px;
+}
+
+.f-col .mb {
+    margin-bottom: 100px;
+}
+
+.f-col .mb {
+    margin-top: 50px;
+}
+
+.f-col > h1 {
+    margin-top: 50px;
+}
+
+.f-col > .img-container {
+    width: 80%;
+    justify-content: space-between;
+}
+
+.f-col > .img-container > img {
+    width: 30%;
+}
+
+.f-col > .top-container {
+    height: 60vh;
+    width: 80%;
+}
+
+.f-col > .top-container h1 {
+    font-size: 55px;
+}
+
+.f-col > .top-container > div {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.f-col .align-left {
+    width: 70%;
+}
+
+.btn {
+    width: 50%;
+    height: 70px;
+    background: rgb(71, 151, 204);
+    color: #ddd;
+    font-size: 20px;
+    border: 0;
+    border-radius: 5px;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'Ubuntu', sans-serif;
+    transition: filter 250ms;
+}
+
+.btn:hover {
+    filter: brightness(80%);
+}
+
+iframe {
+    width: 60vw;
+    height: calc(60vw / 1.7);
+}
+
+.f-col .download-btn-container {
+    width: 70%;
+    margin: 50px 0;
+    justify-content: space-around;
+}
+
+.f-col .download-btn-container > a {
+    width: 400px;
+    height: 60px;
+    text-decoration: none;
+}
+
+.f-col .smaller-font {
+    font-size: 20px;
 }
