@@ -21,14 +21,14 @@ body {
 }
 
 .project-container {
-    width: 60%;
+    width: 60vw;
     gap: 10px;
     flex-wrap: wrap;
     justify-content: left;
 }
 
 .project-container > div {
-    width: 40%;
+    width: 29vw;
     height: 75px;
     padding: 5px;
     display: flex;
