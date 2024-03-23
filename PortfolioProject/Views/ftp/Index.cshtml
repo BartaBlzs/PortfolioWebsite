@@ -1,0 +1,28 @@
+﻿<link rel="stylesheet" href="/css/login.css" />
+
+<div class="background">
+	<img src="/pics/login-folder-1.svg" alt="">
+	<img src="/pics/login-folder-2.svg" alt="">
+</div>
+
+<form id="account" method="post" asp-action="Demo">
+	<h3>Ba FTP Login</h3>
+	<div class="text-danger" role="alert"></div>
+	<label class="form-label">Email</label>
+	<input class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+	<span class="text-danger"></span>
+
+	<label class="form-label">Password</label>
+	<input class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+	<span class="text-danger"></span>
+
+	<label class="form-label">
+		<input class="form-check-input" type="checkbox" />
+		Remember me
+	</label>
+	<button>Log In</button>
+	<button type="submit">Try Demo</button>
+</form>
+
+<script>
+</script>

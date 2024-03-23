@@ -1,9 +1,12 @@
+using System.Text;
+
 namespace Course
 {
     public class Program
     {
         public static void Main(string[] args)
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

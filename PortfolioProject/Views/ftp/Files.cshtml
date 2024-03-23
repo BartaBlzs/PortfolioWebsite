@@ -1,0 +1,346 @@
+﻿@using PortfolioProject.Models
+@model FileModel
+
+<table class="listing-container"></table>
+<div class="btn-group dropstart" style="display: none;">
+	<button type="button" class="dropdown-toggle" data-bs-auto-close="outside" data-bs-toggle="dropdown" aria-expanded="false">
+		<img src="/img/ftp/more.png" alt="">
+	</button>
+	<ul class="dropdown-menu">
+		<li class='dropdown-item' onclick="OpenLiClick()"><img src='/img/ftp/open.png'>Open</li>
+		<li class='dropdown-item' onclick="download()"><img src='/img/ftp/download.png'>Download</li>
+		<li class='dropdown-item'><img src='/img/ftp/rename.png'>Rename</li>
+		<li class='dropdown-item'><img src='/img/ftp/copy-link.png'>Copy Link</li>
+		<li class='dropdown-item'><img src='/img/ftp/delete.png'>Delete</li>
+	</ul>
+</div>
+<script>
+	var curPath = '@Html.Raw(Model.Path)'
+	var cont = $('.listing-container')
+	var dropd = $('.dropstart')
+	var isDropdownOpen = false
+
+	var json = JSON.parse('@Html.Raw(Model.Listing)')
+	
+	function render() {
+		window.history.pushState("", "", `${location.pathname}?path=${curPath}`);
+		cont.empty()
+		cont.append($(`<tr class='back' onclick='backFolder()'>
+						   <td><img src="/img/ftp/file-icons/folder.png"><span>..</span></td>
+						   <td></td>
+						   <td></td>
+						   <td></td>
+					   </tr>`))
+		json.forEach(e => {
+			if(e['Item1'].startsWith(curPath) && e['Item1'].lastIndexOf('/') == curPath.length-1) {
+				if(e['Item4'] == 'file')
+					cont.append($(`<tr class="file" onclick="openFile($(this).data('path'))">
+									<td><img src="/img/ftp/file-icons/html.png"><span>${getFileName(e['Item1'])}</span></td>
+									<td>${new Date(e['Item2']).toLocaleDateString("en-US")}</td>
+									<td>${getReadableSize(e['Item3'])}</td>
+									<td></td>
+									</tr>`).data('path', e['Item1']))
+				else
+					cont.append($(`<tr onclick="openFolder(this)">
+									<td><img src="/img/ftp/file-icons/folder.png"><span>${getFileName(e['Item1'])}</span></td>
+									<td>${new Date(e['Item2']).toLocaleDateString("en-US")}</td>
+									<td></td>
+									<td></td>
+								</tr>`).data('path', e['Item1'] + '/'))
+			}
+		})
+		
+		$('tr').mouseenter(function() {
+			if (!$(this).hasClass('back')) {
+				$(this).find('td:last-child').append(dropd.css('display', 'block'))
+			}
+					
+			$(this).css('backdrop-filter', 'brightness(85%)')
+			
+		})
+		
+		$('tr').mouseleave(function() {
+			if(!isDropdownOpen){
+				$(this).css('backdrop-filter', '')
+				dropd.css('display', 'none')
+			}
+		})
+
+		dropd.on('show.bs.dropdown', function () {
+			isDropdownOpen = true
+			$('tr').css('pointer-events', 'none')
+			dropd.css('pointer-events', 'auto')
+		})
+
+		dropd.on('hide.bs.dropdown', function () {
+			$('tr').css('pointer-events', 'auto')
+			setTimeout(() => {
+				isDropdownOpen = false
+			}, 1);
+			// if mouse on btn -> don't hide
+			if(!dropd.is(':hover')) {
+				$('tr').css('backdrop-filter', '')
+				dropd.css('display', 'none')
+			}
+		})
+	}
+
+	function getFileName(path) {
+		return path.substring(path.lastIndexOf('/') + 1)
+	}
+
+	function getReadableSize(size) {
+		var i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+		return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+	}
+
+	function openFolder(e) {
+		if(!isDropdownOpen) {
+			curPath = $(e).data('path')
+			render()
+		}
+	}
+
+	function backFolder() {
+		curPath = curPath.substring(0, curPath.lastIndexOf('/', curPath.lastIndexOf('/')-1)) + '/'
+		render()
+	}
+
+	function OpenLiClick() {
+		var parent = dropd.closest('tr')
+		if (parent.hasClass('file'))
+			location.href = `/FTP/File?path=${$(parent).data('path')}`
+		else {
+			dropd.find('.dropdown-toggle').click()
+			curPath = $(parent).data('path')
+			render()
+		}	
+	}
+
+	function download() {
+		var parent = dropd.closest('tr')
+		if (parent.hasClass('file'))
+			downloadFile(parent.data('path'))
+		else 
+			downloadFolder(parent.data('path'))
+	}
+
+	function openFile(path) {
+		if(!isDropdownOpen)
+			location.href = `/FTP/File?path=${path}`
+	}
+
+	function downloadFile(path) {
+		console.log('kulb')
+		location.href = `/FTP/DownloadFile?path=${path}`
+	}
+
+	function downloadFolder(path) {
+		location.href = `/FTP/DownloadFolder?path=${path}`
+	}
+
+	render()
+
+    /*
+	var modal1 = document.querySelector('.m1')
+	var modal2 = document.querySelector('.m2')
+	var modal3 = document.querySelector('.m3')
+	var bsmodal1 = new bootstrap.Modal(modal1)
+	var bsmodal2 = new bootstrap.Modal(modal2)
+	var bsmodal3 = new bootstrap.Modal(modal3)
+	var fileDrag = false
+
+	function clickSubmit(sender) {
+		sender.parentElement.querySelector('input[type = submit]').click()
+	}
+
+	function OpenDeleteConfirmationModal(itemName) {
+		modal1.querySelector('.item-name').innerHTML = itemName
+		modal1.querySelector('.path').value = itemName
+		bsmodal1.show()
+	}
+
+	function OpenMoveModal(itemName) {
+		bsmodal3.show()
+		document.querySelector('.m3 .filepath').value = itemName
+	}
+
+	function OpenNewDirModal() {
+		bsmodal2.show()
+	}
+
+	function OpenFile(sender, name) {
+		document.querySelector('.openfile > input[type = hidden]').value = name
+		document.querySelector('.openfile > input[type = submit]').click()
+	}
+
+	function Download(itemName) {
+		document.querySelector('.download > input[type=hidden]').value = itemName
+		document.querySelector('.download > input[type=submit]').click()
+	}
+
+	document.querySelectorAll('.m3 input[type=radio]').forEach(function (e) {
+		e.addEventListener('change', function () {
+			var radio = this
+			document.querySelectorAll('.m3 label').forEach(function (e1) {
+				e1.style.backdropFilter = ''
+			})
+			document.querySelectorAll('.m3 label').forEach(function (e2) {
+				if (e2.getAttribute('for') == radio.getAttribute('id')) {
+					e2.style.backdropFilter = 'brightness(85%)'
+					document.querySelector('.m3 .destpath').value = e2.textContent.trim()
+				}
+			})
+		})
+	})
+
+	window.addEventListener("dragenter", ShowUpload);
+
+	document.querySelector('.dropzone').addEventListener("dragleave", HideUpload);
+
+	window.addEventListener("drop", function () {
+		if (!fileDrag)
+			document.querySelector('.spinner-container').style.display = 'flex'
+	});
+
+	function HideUpload() {
+		document.querySelector('.dropzone').style.display = 'none'
+	}
+
+	function ShowUpload() {
+		if(!fileDrag)
+			document.querySelector('.dropzone').style.display = 'block'
+	}
+
+	function allowDrop(ev) {
+		ev.preventDefault()
+		ev.target.closest('.folder').style.setProperty('--drag-over-border-color', '#3fbeff')
+	}
+
+	function dragLeave(ev) {
+		ev.target.closest('.folder').style.setProperty('--drag-over-border-color', 'transparent')
+	}
+
+	var draggedElement
+	function drag(ev) {
+		fileDrag = true
+		draggedElement = ev.target
+	}
+
+	function drop(ev) {
+		ev.preventDefault()
+		var filename = draggedElement.querySelector('td:nth-child(1) > span').innerHTML
+		var destPath
+		if (ev.target.closest('.folder').tagName == 'FORM') destPath = '..'
+		else destPath = ev.target.closest('.folder').querySelector('td:nth-child(2) > span').innerHTML
+		fetch(`/FTP/MoveFileByDragDrop?filename=${filename}`, {
+			method : 'POST',
+			body: JSON.stringify(destPath),
+			headers: {
+				'Accept': 'application/json; charset=utf-8',
+				'Content-Type': 'application/json; charset=UTF-8'
+			}
+		})
+		draggedElement.remove()
+		
+		//var data = ev.dataTransfer.getData("text")
+		//ev.target.appendChild(document.getElementById(data))
+	}
+
+	function dragend(ev) {
+		fileDrag = false
+		document.querySelectorAll('.folder').forEach(function (val, i) {
+			val.style.setProperty('--drag-over-border-color', 'transparent')
+		})
+	}
+
+	//upload
+	async function getAllFileEntries(dataTransferItemList) {
+		let fileEntries = [];
+		let queue = [];
+		for (let i = 0; i < dataTransferItemList.length; i++) {
+			queue.push(dataTransferItemList[i].webkitGetAsEntry());
+		}
+		while (queue.length > 0) {
+			let entry = queue.shift();
+			if (entry.isFile) {
+				fileEntries.push(entry);
+			} else if (entry.isDirectory) {
+				let reader = entry.createReader();
+				queue.push(...await readAllDirectoryEntries(reader));
+			}
+		}
+		return fileEntries;
+	}
+
+	async function readAllDirectoryEntries(directoryReader) {
+		let entries = [];
+		let readEntries = await readEntriesPromise(directoryReader);
+		while (readEntries.length > 0) {
+			entries.push(...readEntries);
+			readEntries = await readEntriesPromise(directoryReader);
+		}
+		return entries;
+	}
+
+	async function readEntriesPromise(directoryReader) {
+		try {
+			return await new Promise((resolve, reject) => {
+				directoryReader.readEntries(resolve, reject);
+			});
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	var elDrop = document.getElementById('dropzone');
+
+	elDrop.addEventListener('dragover', function (event) {
+		event.preventDefault();
+	});
+	
+	var done = 0
+	var itemsLength
+	elDrop.addEventListener('drop', async function (event) {
+		event.preventDefault();
+		let items = await getAllFileEntries(event.dataTransfer.items);
+		done = 0
+		itemsLength = items.length
+		document.querySelector('.cur-uploading-file-name').innerHTML = items[0].name
+		items.forEach(function (val, i) {
+			val.file(async function (file) {
+				if (file.size <= 78643200) {
+					var reader = new FileReader()
+					reader.addEventListener("load", async function (event) {
+						await fetch(`/FTP/UploadFile?filepath=${val.fullPath}`,
+							{
+								method: 'POST',
+								body: JSON.stringify(new Uint8Array(reader.result).toString()),
+								headers: {
+									'Accept': 'application/json; charset=utf-8',
+									'Content-Type': 'application/json;charset=UTF-8'
+								}
+							})
+							.finally(function () { done++; checkIfUploadDone(); document.querySelector('.cur-uploading-file-name').innerHTML = file.name; })
+					})
+					reader.readAsArrayBuffer(file)
+				}
+				else {
+					done++
+					checkIfUploadDone()
+					document.querySelector('.cur-uploading-file-name').innerHTML = ` ${file.name}'s size is ${Math.ceil(file.size / 1048576)}Mb. Max file size is 75 Mb.`
+				}
+				
+			})},
+
+		function (e) {
+			console.log(e)
+		})
+	})
+	function checkIfUploadDone() {
+		document.querySelector('.spinner-container > .progress > .progress-bar').style.width = (done / itemsLength)*100 + '%'
+		if (done == itemsLength) {
+			setTimeout(() => location.reload(), 1000)
+		}
+	}*/
+</script>
