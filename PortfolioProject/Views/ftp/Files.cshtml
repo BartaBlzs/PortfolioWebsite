@@ -10,16 +10,35 @@
 		<li class='dropdown-item' onclick="OpenLiClick()"><img src='/img/ftp/open.png'>Open</li>
 		<li class='dropdown-item' onclick="download()"><img src='/img/ftp/download.png'>Download</li>
 		<li class='dropdown-item'><img src='/img/ftp/rename.png'>Rename</li>
-		<li class='dropdown-item'><img src='/img/ftp/copy-link.png'>Copy Link</li>
-		<li class='dropdown-item'><img src='/img/ftp/delete.png'>Delete</li>
+		<li class='dropdown-item' onclick="copyToClipboard()"><img src='/img/ftp/copy-link.png'>Copy Link</li>
+		<li class='dropdown-item' onclick="Delete()"><img src='/img/ftp/delete.png'>Delete</li>
 	</ul>
 </div>
+<div class="modal fade" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h1 class="modal-title fs-5">Modal title</h1>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p class="content"></p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary confirm-btn">Confirm</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 	var curPath = '@Html.Raw(Model.Path)'
 	var cont = $('.listing-container')
 	var dropd = $('.dropstart')
 	var isDropdownOpen = false
-
+	var modal = $('.modal.fade')
+	var modalbtn = modal.find('.confirm-btn')
 	var json = JSON.parse('@Html.Raw(Model.Listing)')
 	
 	function render() {
@@ -137,6 +156,49 @@
 
 	function downloadFolder(path) {
 		location.href = `/FTP/DownloadFolder?path=${path}`
+	}
+
+	function copyToClipboard(e) {
+		var parent = dropd.closest('tr')
+		if (parent.hasClass('file'))
+			navigator.clipboard.writeText(`${location.host}/FTP/File?path=${parent.data('path')}`)
+		else
+			navigator.clipboard.writeText(`${location.host}/FTP/Files?path=${parent.data('path')}`)
+	}
+
+	function Delete() {
+		OpenModal("Are you sure you want to delete this item?", "", "Delete", "btn-danger")
+	}
+
+	function OpenModal(title, content, btnText, btnClass) {
+		modal.find('.modal-title').text(title)
+		modal.find('.content').text(content)
+		modalbtn.text(btnText)
+		modalbtn.removeClass()
+		modalbtn.addClass(`btn ${btnClass}`)
+		modalbtn.unbind('click')
+		modalbtn.click(function () {
+			var parent = dropd.closest('tr')
+			if (parent.hasClass('file'))
+				fetch(`/FTP/DeleteFile?path=${parent.data('path')}`)
+			else
+				fetch(`/FTP/DeleteFolder?path=${parent.data('path')}`)
+			$('body').append(dropd)
+
+			for (let i = 0; i < Object.keys(json).length; i++) {
+				var fname = json[i].Item1
+				if(json[i].Item4 == 'directory') fname += '/'
+				if (fname == parent.data('path')) {
+					json.splice(i, 1)
+					break
+				}
+			}
+
+			parent.remove()
+
+			modal.modal('hide')
+		})
+		modal.modal('show')
 	}
 
 	render()

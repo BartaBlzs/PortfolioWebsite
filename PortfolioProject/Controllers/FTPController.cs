@@ -17,9 +17,12 @@ namespace PortfolioProject.Controllers
 {
     public class FTPController : Controller
     {
-        private string APP_PASS_ba = "miahbageci";
-        private string APP_PASS_ma = "marcigeci";
         FtpClient ftp = new("win6055.site4now.net", new System.Net.NetworkCredential { UserName = "ftpba", Password = "4700216001Sh" });
+
+        public FTPController()
+        {
+            ftp.AutoConnect();
+        }
 
         public IActionResult Index()
         {
@@ -71,7 +74,8 @@ namespace PortfolioProject.Controllers
 			else
 			{
 				StreamReader reader = new(stream);
-                return View("file", $"<pre>{reader.ReadToEnd()}</pre>");
+                if(path.EndsWith(".svg")) return View("file", $"<pre>{reader.ReadToEnd()}</pre>");
+				return View("file", $"<pre>{HttpUtility.HtmlEncode(reader.ReadToEnd())}</pre>");
 			}
 		}
 
@@ -109,6 +113,16 @@ namespace PortfolioProject.Controllers
 
 			outputMemStream.Position = 0;
 			return File(outputMemStream.ToArray(), "APPLICATION/octet-stream", Path.GetFileName(path[..^1]) + ".zip");
+		}
+
+        public void DeleteFile(string path)
+        {
+            ftp.DeleteFile(path);
+		}
+
+		public void DeleteFolder(string path)
+		{
+            ftp.DeleteDirectory(path[..^1]);
 		}
 
 		public IActionResult OpenZip()
@@ -211,11 +225,6 @@ namespace PortfolioProject.Controllers
             return File(DownloadStream(path), "APPLICATION/octet-stream", path);
         }
 
-        public IActionResult DeleteFile(string path)
-        {
-            return null;
-        }
-
         public IActionResult NewDir(string path)
         {
 			return null;
@@ -247,24 +256,20 @@ namespace PortfolioProject.Controllers
 		private MemoryStream DownloadStream(string path)
 		{
 			var stream = new MemoryStream();
-			ftp.Connect();
 			ftp.DownloadStream(stream, path);
 			stream.Seek(0, SeekOrigin.Begin);
-			ftp.Disconnect();
 			return stream;
 		}
 
 		private MemoryStream[] DownloadStream(string[] paths)
 		{
 			var streams = new MemoryStream[paths.Length];
-			ftp.Connect();
             for(int i = 0; i < paths.Length; i++)
 			{
                 streams[i] = new MemoryStream();
 				ftp.DownloadStream(streams[i], paths[i]);
                 streams[i].Seek(0, SeekOrigin.Begin);
 			}
-			ftp.Disconnect();
 			return streams;
 		}
 	}

@@ -6,6 +6,7 @@ body {
     font-family: 'Ubuntu', sans-serif;
     font-weight: 400;
     overflow-y: hidden;
+    scroll-behavior: smooth;
     margin: 0;
 }
 
@@ -89,6 +90,7 @@ ul.title-animation li a {
     -webkit-text-stroke:5px var(--clr);
     font-family: 'Ubuntu', sans-serif;
     white-space: nowrap;
+    cursor: pointer;
 }
 
 ul.title-animation li a::before {
