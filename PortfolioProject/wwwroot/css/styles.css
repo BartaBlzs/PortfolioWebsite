@@ -177,3 +177,11 @@ ul.title-animation li a:hover::before {
 .content .bio button:active {
     filter: brightness(70%);
 }
+
+p.no-bottom-margin {
+    margin-bottom: 0px !important;
+}
+
+p.no-top-margin {
+    margin-top: 15px !important;
+}

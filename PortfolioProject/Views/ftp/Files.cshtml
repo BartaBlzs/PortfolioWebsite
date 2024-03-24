@@ -54,7 +54,7 @@
 			if(e['Item1'].startsWith(curPath) && e['Item1'].lastIndexOf('/') == curPath.length-1) {
 				if(e['Item4'] == 'file')
 					cont.append($(`<tr class="file" onclick="openFile($(this).data('path'))">
-									<td><img src="/img/ftp/file-icons/html.png"><span>${getFileName(e['Item1'])}</span></td>
+									<td><img src="/img/ftp/file-icons/${getFileIcon(e['Item1'])}.png" onerror="this.onerror=null; this.src='/img/ftp/file-icons/file.png'"; console.log('The image will be replaced with a default icon.')><span>${getFileName(e['Item1'])}</span></td>
 									<td>${new Date(e['Item2']).toLocaleDateString("en-US")}</td>
 									<td>${getReadableSize(e['Item3'])}</td>
 									<td></td>
@@ -75,7 +75,6 @@
 			}
 					
 			$(this).css('backdrop-filter', 'brightness(85%)')
-			
 		})
 		
 		$('tr').mouseleave(function() {
@@ -106,6 +105,46 @@
 
 	function getFileName(path) {
 		return path.substring(path.lastIndexOf('/') + 1)
+	}
+
+	function getFileIcon(e) {
+		var ext = e.substring(e.lastIndexOf('.') + 1)
+		switch (ext) {
+			case 'jpeg':
+			case 'png':
+			case 'jpg':
+			case 'gif':
+			case 'avif':
+			case 'jfif':
+			case 'pjpeg':
+			case 'pjp':
+			case 'svg':
+			case 'webp':
+				return 'img'
+				break;
+			case 'html':
+			case 'htm':
+				return 'html'
+				break;
+			case 'ppt':
+			case 'pptx':
+				return 'pptx'
+				break;
+			case 'xlsx':
+			case 'xls':
+				return 'xlsx'
+				break;
+			case 'doc':
+			case 'docx':
+				return 'docx'
+				break;
+			case 'zip':
+			case 'rar':
+				return 'zip'
+				break;
+			default:
+				return ext
+		}
 	}
 
 	function getReadableSize(size) {
@@ -200,6 +239,8 @@
 		})
 		modal.modal('show')
 	}
+
+	
 
 	render()
 
