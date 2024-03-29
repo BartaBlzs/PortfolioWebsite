@@ -1,6 +1,20 @@
 ﻿@using PortfolioProject.Models
 @model FileModel
 
+<div class="bg-animation">
+	<div></div>
+	<div></div>
+	<div></div>
+	<div></div>
+	<div></div>
+	<div></div>
+	<div></div>
+</div>
+
+<div class="path-ui">
+	
+</div>
+
 <table class="listing-container"></table>
 <div class="btn-group dropstart" style="display: none;">
 	<button type="button" class="dropdown-toggle" data-bs-auto-close="outside" data-bs-toggle="dropdown" aria-expanded="false">
@@ -32,7 +46,22 @@
 	</div>
 </div>
 
+<div class="dropzone">
+	<label for="files"></label>
+	<input type="file" id="dropzone" name="files" id="files" multiple />
+	<button class="btn btn-primary" type="button" onclick="HideUpload()">back</button>
+</div>
+
+<div class="spinner-container">
+	<div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+	<div class="progress">
+		<div class="progress-bar" role="progressbar"></div>
+	</div>
+	<h6 class="cur-uploading-file-name"></h6>
+</div>
+
 <script>
+
 	var curPath = '@Html.Raw(Model.Path)'
 	var cont = $('.listing-container')
 	var dropd = $('.dropstart')
@@ -40,27 +69,30 @@
 	var modal = $('.modal.fade')
 	var modalbtn = modal.find('.confirm-btn')
 	var json = JSON.parse('@Html.Raw(Model.Listing)')
+	var fileDrag = false
 	
 	function render() {
 		window.history.pushState("", "", `${location.pathname}?path=${curPath}`);
 		cont.empty()
-		cont.append($(`<tr class='back' onclick='backFolder()'>
-						   <td><img src="/img/ftp/file-icons/folder.png"><span>..</span></td>
-						   <td></td>
-						   <td></td>
-						   <td></td>
-					   </tr>`))
+		if (curPath != '/') {
+			cont.append($(`<tr class='back' onclick='backFolder()' ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+							   <td><img src="/img/ftp/file-icons/folder.png"><span>..</span></td>
+							   <td></td>
+							   <td></td>
+							   <td></td>
+						   </tr>`).data('path', curPath.substring(0, curPath.lastIndexOf('/', curPath.lastIndexOf('/') - 1)) + '/'))
+		}
 		json.forEach(e => {
 			if(e['Item1'].startsWith(curPath) && e['Item1'].lastIndexOf('/') == curPath.length-1) {
 				if(e['Item4'] == 'file')
-					cont.append($(`<tr class="file" onclick="openFile($(this).data('path'))">
+					cont.append($(`<tr class="file" onclick="openFile($(this).data('path'))" draggable="true" ondragstart="drag(event)" ondragend="dragend(event)">
 									<td><img src="/img/ftp/file-icons/${getFileIcon(e['Item1'])}.png" onerror="this.onerror=null; this.src='/img/ftp/file-icons/file.png'"; console.log('The image will be replaced with a default icon.')><span>${getFileName(e['Item1'])}</span></td>
 									<td>${new Date(e['Item2']).toLocaleDateString("en-US")}</td>
 									<td>${getReadableSize(e['Item3'])}</td>
 									<td></td>
 									</tr>`).data('path', e['Item1']))
 				else
-					cont.append($(`<tr onclick="openFolder(this)">
+					cont.append($(`<tr onclick="openFolder(this)" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" draggable="true" ondragstart="drag(event)" ondragend="dragend(event)">
 									<td><img src="/img/ftp/file-icons/folder.png"><span>${getFileName(e['Item1'])}</span></td>
 									<td>${new Date(e['Item2']).toLocaleDateString("en-US")}</td>
 									<td></td>
@@ -68,6 +100,8 @@
 								</tr>`).data('path', e['Item1'] + '/'))
 			}
 		})
+
+		updatePathUi()
 		
 		$('tr').mouseenter(function() {
 			if (!$(this).hasClass('back')) {
@@ -95,12 +129,30 @@
 			setTimeout(() => {
 				isDropdownOpen = false
 			}, 1);
+
 			// if mouse on btn -> don't hide
 			if(!dropd.is(':hover')) {
 				$('tr').css('backdrop-filter', '')
 				dropd.css('display', 'none')
 			}
 		})
+
+		function updatePathUi() {
+			$('.path-ui').empty()
+			$('.path-ui').append($(`<span>My Files</span>`).click(function() {
+				curPath = '/'
+				render()
+			}))
+			if(curPath != '/') {
+				for (var s of curPath.substring(1, curPath.length - 1).split('/')) {
+					$('.path-ui').append($(`<div>/</div>`))
+					$('.path-ui').append($(`<span>${s}</span>`).data('path', curPath.substring(0, curPath.indexOf(s)) + s + '/').click(function () {
+						curPath = $(this).data('path')
+						render()
+					}))
+				}
+			}
+		}
 	}
 
 	function getFileName(path) {
@@ -189,7 +241,6 @@
 	}
 
 	function downloadFile(path) {
-		console.log('kulb')
 		location.href = `/FTP/DownloadFile?path=${path}`
 	}
 
@@ -240,7 +291,161 @@
 		modal.modal('show')
 	}
 
-	
+	async function getAllFileEntries(dataTransferItemList) {
+		let fileEntries = [];
+		let queue = [];
+		for (let i = 0; i < dataTransferItemList.length; i++) {
+			queue.push(dataTransferItemList[i].webkitGetAsEntry());
+		}
+		while (queue.length > 0) {
+			let entry = queue.shift();
+			if (entry.isFile) {
+				fileEntries.push(entry);
+			} else if (entry.isDirectory) {
+				let reader = entry.createReader();
+				queue.push(...await readAllDirectoryEntries(reader));
+			}
+		}
+		return fileEntries;
+	}
+
+	async function readAllDirectoryEntries(directoryReader) {
+		let entries = [];
+		let readEntries = await readEntriesPromise(directoryReader);
+		while (readEntries.length > 0) {
+			entries.push(...readEntries);
+			readEntries = await readEntriesPromise(directoryReader);
+		}
+		return entries;
+	}
+
+	async function readEntriesPromise(directoryReader) {
+		try {
+			return await new Promise((resolve, reject) => {
+				directoryReader.readEntries(resolve, reject);
+			});
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	var uploadDropZone = document.getElementById('dropzone');
+
+	window.addEventListener("dragenter", ShowUpload);
+
+	document.querySelector('.dropzone').addEventListener("dragleave", HideUpload);
+
+	window.addEventListener("drop", function () {
+		if (!fileDrag)
+			document.querySelector('.spinner-container').style.display = 'flex'
+	});
+
+	function HideUpload() {
+		document.querySelector('.dropzone').style.display = 'none'
+	}
+
+	function ShowUpload() {
+		if (!fileDrag)
+			document.querySelector('.dropzone').style.display = 'block'
+	}
+
+	uploadDropZone.addEventListener('dragover', function (event) {
+		event.preventDefault();
+	});
+
+	function allowDrop(ev) {
+		ev.preventDefault()
+		ev.target.closest('tr').style.setProperty('--drag-over-border-color', '#3fbeff')
+	}
+
+	function dragLeave(ev) {
+		ev.target.closest('tr').style.setProperty('--drag-over-border-color', 'transparent')
+	}
+
+	var dr
+	function drag(ev) {
+		fileDrag = true
+		dr = $(ev.target)
+	}
+
+	function drop(ev) {
+		ev.preventDefault()
+		var destPath = $(ev.target).closest('tr').data('path') + dr.data('path').replace(/^.*[\\/]/, '')
+
+		//overwrite if exists
+		for (let i = 0; i < Object.keys(json).length; i++) {
+			var fname = json[i].Item1
+			if (fname == destPath) {
+				json.splice(i, 1);
+			}
+		}
+
+		// change path
+		for (let i = 0; i < Object.keys(json).length; i++) {
+			var fname = json[i].Item1
+			if (fname == dr.data('path')) {
+				json[i]['Item1'] = destPath
+				break
+			}
+		}
+
+		fetch(`/FTP/MoveFile?from=${dr.data('path')}&dest=${destPath}`)
+		dr.remove()
+
+		//var data = ev.dataTransfer.getData("text")
+		//ev.target.appendChild(document.getElementById(data))
+	}
+
+	function dragend(ev) {
+		fileDrag = false
+		$('tr').css('--drag-over-border-color', 'transparent')
+	}
+
+	var done = 0
+	var itemsLength
+	uploadDropZone.addEventListener('drop', async function (event) {
+		event.preventDefault();
+		let items = await getAllFileEntries(event.dataTransfer.items);
+		done = 0
+		itemsLength = items.length
+		document.querySelector('.cur-uploading-file-name').innerHTML = items[0].name
+		items.forEach(function (val, i) {
+			val.file(async function (file) {
+				if (file.size <= 78643200) {
+					var reader = new FileReader()
+					reader.addEventListener("load", async function (event) {
+						await fetch(`/FTP/UploadFile?filepath=${curPath + val.fullPath.substring(1)}`,
+							{
+								method: 'POST',
+								body: JSON.stringify(new Uint8Array(reader.result).toString()),
+								headers: {
+									'Accept': 'application/json; charset=utf-8',
+									'Content-Type': 'application/json;charset=UTF-8'
+								}
+							})
+							.finally(function () { done++; checkIfUploadDone(); document.querySelector('.cur-uploading-file-name').innerHTML = file.name; })
+					})
+					reader.readAsArrayBuffer(file)
+				}
+				else {
+					done++
+					checkIfUploadDone()
+					document.querySelector('.cur-uploading-file-name').innerHTML = ` ${file.name}'s size is ${Math.ceil(file.size / 1048576)}Mb. Max file size is 75 Mb.`
+				}
+
+			})
+		},
+
+			function (e) {
+				console.log(e)
+			})
+	})
+	function checkIfUploadDone() {
+		document.querySelector('.spinner-container > .progress > .progress-bar').style.width = (done / itemsLength) * 100 + '%'
+		if (done == itemsLength) {
+			setTimeout(() => location.reload(), 1000)
+		}
+	}
 
 	render()
 
@@ -396,15 +601,15 @@
 		}
 	}
 
-	var elDrop = document.getElementById('dropzone');
+	var uploadDropZone = document.getElementById('dropzone');
 
-	elDrop.addEventListener('dragover', function (event) {
+	uploadDropZone.addEventListener('dragover', function (event) {
 		event.preventDefault();
 	});
 	
 	var done = 0
 	var itemsLength
-	elDrop.addEventListener('drop', async function (event) {
+	uploadDropZone.addEventListener('drop', async function (event) {
 		event.preventDefault();
 		let items = await getAllFileEntries(event.dataTransfer.items);
 		done = 0

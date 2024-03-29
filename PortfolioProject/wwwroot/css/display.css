@@ -1,4 +1,13 @@
-﻿.flex{
+﻿* {
+	margin: 0;
+}
+
+body {
+	height: 100vh;
+	margin: 0;
+}
+
+.flex{
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -8,4 +17,9 @@ svg {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
+}
+
+.ms-liveview {
+	width: 100%;
+	height: 100%;
 }

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>animated background</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-animation">
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script>
+    var c = $('.cont')
+    $('.cont > div').on('animationiteration', function(e) {
+        $(e.target).css('left', Math.round(Math.random() * c.width()))
+    })
+    
+    for(let i = 0; i < 8; i++) {
+        var size = random(50, 300)
+        c.append($('<div></div>').css({
+            'bottom': random(-400, -size),
+            'left': random(0, c.width()),
+            'width': size,
+            'height': size,
+            'animation': `animation ${random(20, 30)}s linear ${random(0, 10)}s infinite`,
+            'border-radius': random(5, 15)
+        }).on('animationend', function(e) {
+            var size = random(50, 300)
+            $(e.target).css({
+                'bottom': random(-1000, -size),
+                'left': random(0, c.width()),
+                'width': size,
+                'height': size,
+                'animation-duration': `${random(20, 30)}s`,
+                'animation-delay': `${random(2, 7)}s`
+            })
+        }))
+    }
+
+    function random(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) ) + min
+    }
+</script>
+</html>

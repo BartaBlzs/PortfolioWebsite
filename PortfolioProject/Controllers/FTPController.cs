@@ -68,8 +68,8 @@ namespace PortfolioProject.Controllers
 			}
 			else if (path.EndsWith(".ppt") || path.EndsWith(".pptx") || path.EndsWith(".doc") || path.EndsWith(".docx") || path.EndsWith(".xls") || path.EndsWith(".xlsx"))
 			{
-				var url = $"/FTP/Embed?path={HttpUtility.UrlEncode(path)}";
-                return View("file", $"<iframe src='https://view.officeapps.live.com/op/embed.aspx?src={url}' width='100%' height='100%' frameborder='0'>");
+				var url = $"https://bartabalazs.hu/FTP/Embed?path={HttpUtility.UrlEncode(path)}";
+                return View("file", $"<iframe class='ms-liveview' src='https://view.officeapps.live.com/op/embed.aspx?src={url}'>");
 			}
 			else
 			{
@@ -125,15 +125,6 @@ namespace PortfolioProject.Controllers
             ftp.DeleteDirectory(path[..^1]);
 		}
 
-		public IActionResult OpenZip()
-        {
-            var stream = DownloadStream(Request.Cookies["OpenedZipPath"]);
-            Archive zip;
-            if (Request.Cookies["OpenedZipPath"].EndsWith(".rar")) zip = RarToZip(stream);
-            else zip = new Archive(stream);
-            return View(new ZipFileModel(zip, Request.Cookies["ZipWorkingDir"]));
-        }
-
         public Archive RarToZip(Stream stream)
         {
             RarArchive zipin = new(stream);
@@ -151,101 +142,42 @@ namespace PortfolioProject.Controllers
             return zip;
         }
 
-        public IActionResult ZipFolder(string path)
-        {
-            if (path == null) Response.Cookies.Append("ZipWorkingDir", "/");
-            if (path == "../") Response.Cookies.Append("ZipWorkingDir", string.Join("/", Request.Cookies["ZipWorkingDir"].Split("/")[0..^2]) + "/");
-            else Response.Cookies.Append("ZipWorkingDir", Request.Cookies["ZipWorkingDir"] + path + "/");
-            return RedirectToAction(nameof(OpenZip));
-        }
-
-        public IActionResult OpenZippedFile(string path)
-        {
-            var stream = DownloadStream(Request.Cookies["OpenedZipPath"]);
-            if (Request.Cookies["OpenedZipPath"].EndsWith(".rar"))
-            {
-                var zip = new RarArchive(stream);
-                if (path.EndsWith(".png") || path.EndsWith(".jpg") || path.EndsWith(".webp") || path.EndsWith(".jfif"))
-                {
-                    var ms = new MemoryStream();
-                    zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open().CopyTo(ms);
-                    return Content($"<html><link rel='stylesheet' href='/css/display.css' /><body class='flex'><img src='{"data:image/png;base64," + Convert.ToBase64String(ms.ToArray(), 0, ms.ToArray().Length)}'></body></html>", "text/html");
-                }
-                else
-                {
-                    StreamReader reader = new(zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open());
-
-                    if (path.EndsWith(".svg")) return Content($"<html><link rel='stylesheet' href='/css/display.css' /><body class='flex'>{reader.ReadToEnd()}</body></html>", "text/html");
-                    return Content($"<html><body><pre>{reader.ReadToEnd()}</pre></body></html>", "text/html");
-                }
-            }
-            else
-            {
-                var zip = new Archive(stream);
-                if (path.EndsWith(".png") || path.EndsWith(".jpg") || path.EndsWith(".webp") || path.EndsWith(".jfif"))
-                {
-                    var ms = new MemoryStream();
-                    zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open().CopyTo(ms);
-                    return Content($"<html><link rel='stylesheet' href='/css/display.css' /><body class='flex'><img src='{"data:image/png;base64," + Convert.ToBase64String(ms.ToArray(), 0, ms.ToArray().Length)}'></body></html>", "text/html");
-                }
-                else
-                {
-                    StreamReader reader = new(zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open());
-
-                    if (path.EndsWith(".svg")) return Content($"<html><link rel='stylesheet' href='/css/display.css' /><body class='flex'>{reader.ReadToEnd()}</body></html>", "text/html");
-                    return Content($"<html><body><pre>{reader.ReadToEnd()}</pre></body></html>", "text/html");
-                }
-            }
-
-        }
-
-        public IActionResult DownloadZippedFile(string path)
-        {
-            var stream = DownloadStream(Request.Cookies["OpenedZipPath"]);
-            if (Request.Cookies["OpenedZipPath"].EndsWith(".rar"))
-            {
-                var zip = new RarArchive(stream);
-                return File(zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open(), "APPLICATION/octet-stream", path);
-            }
-            else
-            {
-                var zip = new Archive(stream);
-                return File(zip.Entries.FirstOrDefault(x => x.Name == Request.Cookies["ZipWorkingDir"][1..] + path).Open(), "APPLICATION/octet-stream", path);
-            }
-        }
-
-        public IActionResult OpenFileRel(string path)
-        {
-            return null;
-        }
-
         [HttpGet]
         public IActionResult Embed(string path)
         {
             return File(DownloadStream(path), "APPLICATION/octet-stream", path);
         }
 
-        public IActionResult NewDir(string path)
-        {
-			return null;
-		}
-
         [HttpPost]
         [DisableRequestSizeLimit]
         public JsonResult UploadFile(string filepath, [FromBody] string file)
         {
-			return null;
+			try
+			{
+				byte[] f = file.Split(',').Select(byte.Parse).ToArray();
+				using MemoryStream ms = new();
+				var sw = new BinaryWriter(ms);
+				try
+				{
+					sw.Write(f);
+					sw.Flush();
+					ms.Seek(0, SeekOrigin.Begin);
+					ftp.Connect();
+					ftp.UploadStream(ms, filepath, createRemoteDir: true);
+					ftp.Disconnect();
+				}
+				finally
+				{
+					sw.Dispose();
+				}
+			}
+			catch (Exception ex) { Console.WriteLine(ex.Message); }
+			return Json("ok");
 		}
 
-        public IActionResult MoveFile(string filepath, string destpath)
+        public void MoveFile(string from, string dest)
         {
-			return null;
-		}
-
-        [HttpPost]
-        public void MoveFileByDragDrop(string filename, [FromBody] string destpath)
-        {
-			
+			ftp.MoveFile(from, dest);
 		}
 
         public IActionResult Logout()
