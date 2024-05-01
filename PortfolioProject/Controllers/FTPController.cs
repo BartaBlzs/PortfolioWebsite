@@ -180,7 +180,12 @@ namespace PortfolioProject.Controllers
 			ftp.MoveFile(from, dest);
 		}
 
-        public IActionResult Logout()
+		public void MoveFolder(string from, string dest)
+		{
+			ftp.MoveDirectory(from, dest);
+		}
+
+		public IActionResult Logout()
         {
 			return null;
 		}

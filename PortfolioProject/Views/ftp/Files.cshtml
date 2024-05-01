@@ -369,6 +369,19 @@
 	}
 
 	function drop(ev) {
+		if (dr.hasClass('file')) moveFile(ev)
+		else moveFolder(ev)
+	}
+
+	function moveFolder(ev) {
+		ev.preventDefault()
+		var destPath = $(ev.target).closest('tr').data('path') + dr.data('path').substring(0, dr.data('path').length - 1).replace(/^.*[\\/]/, '')
+
+		fetch(`/FTP/MoveFolder?from=${dr.data('path').substring(0, dr.data('path').length - 1)}&dest=${destPath}`)
+		location.reload()
+	}
+
+	function moveFile(ev) {
 		ev.preventDefault()
 		var destPath = $(ev.target).closest('tr').data('path') + dr.data('path').replace(/^.*[\\/]/, '')
 
@@ -391,9 +404,6 @@
 
 		fetch(`/FTP/MoveFile?from=${dr.data('path')}&dest=${destPath}`)
 		dr.remove()
-
-		//var data = ev.dataTransfer.getData("text")
-		//ev.target.appendChild(document.getElementById(data))
 	}
 
 	function dragend(ev) {
@@ -447,7 +457,15 @@
 		}
 	}
 
-	render()
+	(function ($) {
+		$(window).on('popstate', function (e) {
+			let qry = new URLSearchParams(location.search);
+			curPath = qry.get('path')
+			render()
+			
+		});
+		render()
+	})(jQuery);
 
     /*
 	var modal1 = document.querySelector('.m1')
