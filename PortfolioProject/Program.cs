@@ -1,38 +1,42 @@
-using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Auth.Data;
+using Auth.Models;
+var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("constring") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
 
-namespace Course
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddDefaultIdentity<AppUser>(options =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            var builder = WebApplication.CreateBuilder(args);
+    options.Password.RequiredUniqueChars = 0;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
+}).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
-            var app = builder.Build();
+// Add services to the container.
+builder.Services.AddControllersWithViews();
 
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+var app = builder.Build();
 
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Portfolio}/{action=Index}/{id?}");
-
-            app.Run();
-        }
-    }
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Portfolio}/{action=Index}/{id?}");
+
+app.Run();
